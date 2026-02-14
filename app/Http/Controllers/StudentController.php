@@ -12,7 +12,13 @@ class StudentController extends Controller
      */
     public function index()
     {
-        return response()->json(['message' => 'Danh sách sinh viên']);
+        // Lấy tất cả sinh viên từ DB bằng Eloquent
+        $students = Student::all();
+
+        return response()->json([
+            'message' => 'Lấy danh sách thành công!',
+            'data' => $students
+        ], 200);
     }
 
     /**
@@ -44,7 +50,20 @@ class StudentController extends Controller
      */
     public function show(string $id)
     {
-        return response()->json(['message' => 'Chi tiết sinh viên ' . $id]);
+        // Tìm sinh viên theo ID bằng Eloquent
+        $student = Student::find($id);
+
+        // Kiểm tra nếu không tìm thấy sinh viên
+        if (!$student) {
+            return response()->json([
+                'message' => 'Không tìm thấy sinh viên này!'
+            ], 404); // Trả về mã lỗi 404
+        }
+
+        return response()->json([
+            'message' => 'Chi tiết sinh viên ' . $id,
+            'data' => $student
+        ], 200);
     }
 
     /**
@@ -52,7 +71,29 @@ class StudentController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        return response()->json(['message' => 'Cập nhật sinh viên ' . $id]);
+        // 1. Tìm sinh viên cần sửa
+        $student = Student::find($id);
+
+        if (!$student) {
+            return response()->json(['message' => 'Không tìm thấy sinh viên để cập nhật!'], 404);
+        }
+
+        // 2. Kiểm tra dữ liệu gửi lên (Validation)
+        // Lưu ý: email phải unique nhưng ngoại trừ chính ID hiện tại
+        $validatedData = $request->validate([
+            'name'       => 'sometimes|required|string|min:3',
+            'email'      => 'sometimes|required|email|unique:students,email,' . $id,
+            'age'        => 'sometimes|required|integer|min:18',
+            'class_name' => 'sometimes|required|string',
+        ]);
+
+        // 3. Cập nhật vào Database
+        $student->update($validatedData);
+
+        return response()->json([
+            'message' => 'Cập nhật thông tin sinh viên thành công!',
+            'data'    => $student
+        ], 200);
     }
 
     /**
@@ -60,6 +101,18 @@ class StudentController extends Controller
      */
     public function destroy(string $id)
     {
-        return response()->json(['message' => 'Đã xóa sinh viên ' . $id]);
+        // 1. Tìm sinh viên cần xóa
+        $student = Student::find($id);
+
+        if (!$student) {
+            return response()->json(['message' => 'Không tìm thấy sinh viên để xóa!'], 404);
+        }
+
+        // 2. Thực hiện xóa
+        $student->delete();
+
+        return response()->json([
+            'message' => 'Đã xóa sinh viên khỏi hệ thống thành công!'
+        ], 200);
     }
 }
