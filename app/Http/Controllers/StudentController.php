@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
-
+// Import model vào controller để sử dụng
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
@@ -21,16 +22,21 @@ class StudentController extends Controller
     {
         // Bước 1: Quét an ninh
         $validatedData = $request->validate([
-            'name'  => 'required|string|min:3',
-            'email' => 'required|email',
-            'age'   => 'required|integer|min:18',
+            'name'       => 'required|string|min:3',
+            'email'      => 'required|email|unique:students,email',
+            'age'        => 'required|integer|min:18',
+            'class_name' => 'required|string',
         ]);
 
-        // Bước 2: Xử lý chính (Ở đây ta tạm thời trả về JSON để xác nhận)
+        // 2. Dùng Eloquent để lưu vào Database
+        // Lệnh này sẽ tự động tạo một hàng mới trong bảng students
+        $student = Student::create($validatedData);
+
+        // 3. Trả về kết quả JSON kèm theo dữ liệu vừa lưu
         return response()->json([
-            'message' => 'Sinh viên ' . $validatedData['name'] . ' đã qua vòng kiểm duyệt!',
-            'received_data' => $validatedData
-        ], 201); // 201 là mã HTTP báo hiệu "Đã tạo mới thành công"
+            'message' => 'Sinh viên đã được lưu vào hệ thống!',
+            'data'    => $student
+        ], 201);
     }
 
     /**
